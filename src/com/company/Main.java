@@ -56,7 +56,7 @@ public class Main {
         ok = true;
         if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
             ok = false;
-            return new Vector<Double>();
+            return new Pair<>(ok,new Vector<Double>(0));
         }
         return new Pair<>(ok, solve_correct_equation(a, b, c));
     }
