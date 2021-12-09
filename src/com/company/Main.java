@@ -170,7 +170,6 @@ public class Main {
 
         final int thread_num = Runtime.getRuntime().availableProcessors();
         ExecutorService executor = Executors.newFixedThreadPool(thread_num);
-        Lock lock = new ReentrantLock();
         long data_per_thread = n / thread_num;
         for (int thread_id = 0; thread_id < thread_num; ++thread_id) {
             final int thread_id_copy = thread_id;
