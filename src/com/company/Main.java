@@ -2,9 +2,10 @@ package com.company;
 
 import javafx.util.Pair;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -142,15 +143,15 @@ public class Main {
         final int to = 2097152;
         System.out.println("\t\t\t--------Normal-----------");
         for (long i = from; i <= to; i *= 2) {
-            run(i, FuncType.Normal, ProcessType.Sequence);
+            run(i, FuncType.Normal, ProcessType.Paraller);
         }
         System.out.println("\t\t\t--------No exception-----------");
         for (long i = from; i <= to; i *= 2) {
-            run(i, FuncType.NoException, ProcessType.Sequence);
+            run(i, FuncType.NoException, ProcessType.Paraller);
         }
         System.out.println("\t\t\t--------FullException-----------");
         for (long i = from; i <= to; i *= 2) {
-            run(i, FuncType.FullException, ProcessType.Sequence);
+            run(i, FuncType.FullException, ProcessType.Paraller);
         }
     }
 
@@ -162,33 +163,41 @@ public class Main {
             run_parallel(n, type);
         }
         time = System.nanoTime() - time;
-        System.out.printf("Elapsed Consecutively %,9.3f ms\n", time / 1_000_000.0);
+        System.out.printf( n + " %,9.3f ms\n", time / 1_000_000.0);
     }
 
     public static void run_parallel(long n, FuncType type) {
-        AtomicReference<Double> global_sum = new AtomicReference<>((double) 0);
-
         final int thread_num = Runtime.getRuntime().availableProcessors();
         ExecutorService executor = Executors.newFixedThreadPool(thread_num);
-        long data_per_thread = n / thread_num;
-        for (int thread_id = 0; thread_id < thread_num; ++thread_id) {
-            final int thread_id_copy = thread_id;
-            executor.submit(() -> {
+        List<Callable<Double>> tasks = new ArrayList<>();
+        try {
+            long data_per_thread = n / thread_num;
+            for (int thread_id = 0; thread_id < thread_num; ++thread_id){
+                final int thread_id_copy = thread_id;
                 long start = thread_id_copy * data_per_thread;
                 long end = start + data_per_thread;
+                long finalEnd = end;
                 if (thread_id_copy == thread_num - 1) {
                     end = n;
                 }
+                tasks.add(new Callable<Double>() {
+                    @Override
+                    public Double call() throws Exception {
+                        return run_sequence(start, finalEnd,type);
+                    }
+                });
 
-                double local_sum = run_sequence(start,end,type);
-                synchronized (global_sum) {
-                    double local_sum_copy = local_sum;
-                    global_sum.updateAndGet(v -> new Double((double) (v + local_sum_copy)));
-                }
-            });
+        } List<Future<Double>> invokeAll = executor.invokeAll(tasks);
+
+        } catch (InterruptedException e){
+            e.printStackTrace();
         }
-        executor.shutdown();
+        finally {
+            executor.shutdown();
+        }
     }
+
+
 
     public static Double run_sequence(long from, long to, FuncType type) {
         double sum = 0;
