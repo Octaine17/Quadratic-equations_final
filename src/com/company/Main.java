@@ -94,11 +94,10 @@ public class Main {
     }
 
     static double roots_sum_no_exception(double a, double b, double c) {
-        Pair pair = (Pair) solve_no_exceptions(a, b, c);
-        if (true == (boolean) pair.getKey()) {
-            return sum_vec((Vector<Double>) pair.getValue());
+       if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
+            return new Pair(false, new Vector<Double>());
         }
-        return 0;
+        return new Pair(true, solve_correct_equation(a,b,c));
     }
 
     static double sum_vec(Vector<Double> roots) {
