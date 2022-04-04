@@ -155,9 +155,11 @@ public class Main {
     }
 
     static void run(long n, FuncType type, ProcessType processType) {
+        System.gc();
         long time = System.nanoTime();
         if (processType == ProcessType.Sequence) {
-            run_sequence(0, n, type);
+            Double sum = run_sequence(0, n, type);
+            System.out.println("Sum =" + sum);
         } else if (processType == ProcessType.Paraller) {
             run_parallel(n, type);
         }
