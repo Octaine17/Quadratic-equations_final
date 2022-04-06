@@ -1,14 +1,11 @@
 package com.company;
 
-import javafx.util.Pair;
-
+//import javafx.util.Pair;
+import com.company.Pair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Main {
 
@@ -25,8 +22,7 @@ public class Main {
     }
 
     static boolean isEqual(double a, double b) {
-        double eps = 0.00001;
-        return Math.abs(a - b) < eps;
+        return Math.abs(a - b) < 0.00001;
     }
 
     static Vector<Double> solve_correct_equation(double a, double b, double c) {
@@ -59,9 +55,62 @@ public class Main {
 
     static Pair<Boolean, Vector<Double>> solve_no_exceptions(double a, double b, double c) {
         if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
-            return new Pair<>(false, new Vector<Double>());
+            return new Pair(false, new Vector<Double>());
         }
-        return new Pair<>(true, solve_correct_equation(a, b, c));
+        return new Pair(true, solve_correct_equation(a,b,c));
+    }
+
+    static Vector<Double> solve(double a, double b, double c) throws RuntimeException{
+        if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
+            throw new RuntimeException("root is any value");
+        }
+        return solve_correct_equation(a, b, c);
+    }
+
+    static void solve_full_exception(double a, double b, double c) throws ThrowableVector {
+        if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
+            throw new RuntimeException("root is any value");
+        }
+        ThrowableVector vec = new ThrowableVector();
+        vec.vector = (solve_correct_equation(a, b, c));
+        throw vec;
+    }
+
+    static double roots_sum_no_exception(double a, double b, double c) {
+        Pair pair = (Pair) solve_no_exceptions(a, b, c);
+        if (true == (boolean) pair.getKey()) {
+            return sum_vec((Vector<Double>) pair.getValue());
+        }
+        return 0;
+    }
+
+    static double roots_sum(double a, double b, double c) {
+        try {
+            Vector<Double> roots = solve(a, b, c);
+            return sum_vec(roots);
+        } catch (RuntimeException runtimeException) {
+            return 0;
+        }
+    }
+
+    static double roots_sum_full_exception(double a, double b, double c) {
+        try {
+            solve_full_exception(a, b, c);
+        } catch (RuntimeException s) {
+            return 0;
+        } catch (ThrowableVector vector) {
+            Vector secondVector = (Vector < Double >) vector.vector.clone();
+            return sum_vec(secondVector);
+        }
+        throw new RuntimeException("wrong exception");
+    }
+
+    static double sum_vec(Vector<Double> roots) {
+        double sum = 0;
+        for (int i = 0; i < roots.size(); i++) {
+            sum += roots.elementAt(i);
+        }
+        return sum;
     }
 
     static double call_solver(FuncType type, double a, double b, double c) {
@@ -77,80 +126,20 @@ public class Main {
         }
     }
 
-    static double roots_sum(double a, double b, double c) {
-        try {
-            Vector<Double> roots = solve(a, b, c);
-            return sum_vec(roots);
-        } catch (RuntimeException runtimeException) {
-            return 0;
-        }
-    }
-
-    static Vector<Double> solve(double a, double b, double c) {
-        if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
-            throw new RuntimeException("root is any value");
-        }
-        return solve_correct_equation(a, b, c);
-    }
-
-    static double roots_sum_no_exception(double a, double b, double c) {
-       if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
-            return new Pair(false, new Vector<Double>());
-        }
-        return new Pair(true, solve_correct_equation(a,b,c));
-    }
-
-    static double sum_vec(Vector<Double> roots) {
-        double sum = 0;
-        for (int i = 0; i < roots.size(); i++) {
-            sum += roots.elementAt(i);
-        }
-        return sum;
-    }
-
-    public static double sum_vec(ThrowableVector roots) {
-        double sum = 0;
-        for (int i = 0; i < roots.vector.size(); i++) {
-            sum += roots.vector.elementAt(i);
-        }
-        return sum;
-    }
-
-    static double roots_sum_full_exception(double a, double b, double c) {
-        try {
-            solve_full_exception(a, b, c);
-        } catch (RuntimeException s) {
-            return 0;
-        } catch (ThrowableVector vector) {
-            return sum_vec(vector);
-        }
-        throw new RuntimeException("wrong exception");
-    }
-
-    static void solve_full_exception(double a, double b, double c) throws ThrowableVector {
-        if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
-            throw new RuntimeException("root is any value");
-        }
-        ThrowableVector vec = new ThrowableVector();
-        vec.vector = (solve_correct_equation(a, b, c));
-        throw vec;
-    }
-
-
     public static void main(String[] args) {
         final int from = 32768;
         final int to = 2097152;
         System.out.println("\t\t\t--------Normal-----------");
         for (long i = from; i <= to; i *= 2) {
-            run(i, FuncType.Normal, ProcessType.Paraller);
+            run(i, FuncType.Normal, ProcessType.Sequence);
         }
         System.out.println("\t\t\t--------No exception-----------");
         for (long i = from; i <= to; i *= 2) {
-            run(i, FuncType.NoException, ProcessType.Paraller);
+            run(i, FuncType.NoException, ProcessType.Sequence);
         }
         System.out.println("\t\t\t--------FullException-----------");
         for (long i = from; i <= to; i *= 2) {
-            run(i, FuncType.FullException, ProcessType.Paraller);
+            run(i, FuncType.FullException, ProcessType.Sequence);
         }
     }
 
@@ -197,8 +186,6 @@ public class Main {
             executor.shutdown();
         }
     }
-
-
 
     public static Double run_sequence(long from, long to, FuncType type) {
         double sum = 0;
